@@ -37,11 +37,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.jayway.jsonpath.JsonPath;
-import com.nebhale.springone2013.repository.RepositoryConfiguration;
+import com.nebhale.springone2013.Application;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
-@ContextConfiguration(classes = { RepositoryConfiguration.class, WebConfiguration.class })
+@ContextConfiguration(classes = {Application.class})
 public final class GamesControllerIntegrationTest {
 
     @Autowired
