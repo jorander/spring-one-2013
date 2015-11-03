@@ -7,7 +7,7 @@ GAME_ROOT='http://localhost:8080/games'
 
 def get_link_location(source, rel):
 	if isinstance(source, str):
-		payload = requests.get(source).json
+		payload = requests.get(source).json()
 	else:
 		payload = source
 
@@ -20,14 +20,14 @@ def get_link_location(source, rel):
 def get_doors(location):
 	doors = {}
 
-	for door in requests.get(location).json['content']:
+	for door in requests.get(location).json()['content']:
 		doors[get_link_location(door, 'self')] = { 'status': door['status'], 'content': door['content'] }
 
 	return doors
 
 def print_current_state(game_location, doors):
 	print('')
-	print('Game Status:    {}'.format(requests.get(game_location).json['status']))
+	print('Game Status:    {}'.format(requests.get(game_location).json()['status']))
 	for i, key in enumerate(doors):
 		door = doors[key]
 		print('Door {} Status:  {}/{}'.format(i, door['status'], door['content']))
