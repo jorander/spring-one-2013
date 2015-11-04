@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.nebhale.springone2013.model.Door;
 import com.nebhale.springone2013.model.DoorDoesNotExistException;
@@ -55,50 +56,49 @@ final class GamesController {
     private final DoorsResourceAssembler doorsResourceAssembler;
 
     @Autowired
-    GamesController(GameRepository gameRepository, GameResourceAssembler gameResourceAssembler, DoorsResourceAssembler doorsResourceAssembler) {
+    public GamesController(GameRepository gameRepository, GameResourceAssembler gameResourceAssembler, DoorsResourceAssembler doorsResourceAssembler) {
         this.gameRepository = gameRepository;
         this.gameResourceAssembler = gameResourceAssembler;
         this.doorsResourceAssembler = doorsResourceAssembler;
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "")
-    ResponseEntity<Void> createGame() {
-        Game game = this.gameRepository.create();
+    public ResponseEntity<Void> createGame() {
+        Game game = gameRepository.create();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(linkTo(GamesController.class).slash(game.getId()).toUri());
 
-        return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(headers, HttpStatus.CREATED);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{gameId}", produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-    ResponseEntity<Resource<Game>> showGame(@PathVariable Integer gameId) throws GameDoesNotExistException {
-        Game game = this.gameRepository.retrieve(gameId);
-        Resource<Game> resource = this.gameResourceAssembler.toResource(game);
-
-        return new ResponseEntity<Resource<Game>>(resource, HttpStatus.OK);
+    @ResponseBody
+    public Resource<Game> showGame(@PathVariable Integer gameId) throws GameDoesNotExistException {
+        Game game = gameRepository.retrieve(gameId);
+        return gameResourceAssembler.toResource(game);
     }
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/{gameId}")
-    ResponseEntity<Void> destroyGame(@PathVariable Integer gameId) throws GameDoesNotExistException {
-        this.gameRepository.remove(gameId);
-        return new ResponseEntity<Void>(HttpStatus.OK);
+    @ResponseBody
+    public void destroyGame(@PathVariable Integer gameId) throws GameDoesNotExistException {
+        gameRepository.remove(gameId);
     }
 
-    @RequestMapping(method = RequestMethod.GET, value = "/{gameId}/doors", produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-    ResponseEntity<Resources<Resource<Door>>> showDoors(@PathVariable Integer gameId) throws GameDoesNotExistException {
-        Game game = this.gameRepository.retrieve(gameId);
-        Resources<Resource<Door>> resource = this.doorsResourceAssembler.toResource(game);
-
-        return new ResponseEntity<Resources<Resource<Door>>>(resource, HttpStatus.OK);
+    @RequestMapping(method = RequestMethod.GET, value = "/{gameId}/doors", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE})
+    @ResponseBody
+    public Resources<Resource<Door>> showDoors(@PathVariable Integer gameId) throws GameDoesNotExistException {
+        Game game = gameRepository.retrieve(gameId);
+        return doorsResourceAssembler.toResource(game);
     }
 
     @RequestMapping(method = RequestMethod.PUT, value = "/{gameId}/doors/{doorId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = {
-        MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-    ResponseEntity<Void> modifyDoor(@PathVariable Integer gameId, @PathVariable Integer doorId, @RequestBody Map<String, String> body)
-        throws MissingKeyException, GameDoesNotExistException, IllegalTransitionException, DoorDoesNotExistException {
+        MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE})
+    @ResponseBody
+    public void modifyDoor(@PathVariable Integer gameId, @PathVariable Integer doorId, @RequestBody Map<String, String> body)
+            throws MissingKeyException, GameDoesNotExistException, IllegalTransitionException, DoorDoesNotExistException {
         DoorStatus status = getStatus(body);
-        Game game = this.gameRepository.retrieve(gameId);
+        Game game = gameRepository.retrieve(gameId);
 
         if (DoorStatus.SELECTED == status) {
             game.select(doorId);
@@ -107,23 +107,21 @@ final class GamesController {
         } else {
             throw new IllegalTransitionException(gameId, doorId, status);
         }
-
-        return new ResponseEntity<Void>(HttpStatus.OK);
     }
 
     @ExceptionHandler({ GameDoesNotExistException.class, DoorDoesNotExistException.class })
-    ResponseEntity<String> handleNotFounds(Exception e) {
-        return new ResponseEntity<String>(e.getMessage(), HttpStatus.NOT_FOUND);
+    public ResponseEntity<String> handleNotFounds(Exception e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler({ IllegalArgumentException.class, MissingKeyException.class })
-    ResponseEntity<String> handleBadRequests(Exception e) {
-        return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    public ResponseEntity<String> handleBadRequests(Exception e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalTransitionException.class)
-    ResponseEntity<String> handleConflicts(Exception e) {
-        return new ResponseEntity<String>(e.getMessage(), HttpStatus.CONFLICT);
+    public ResponseEntity<String> handleConflicts(Exception e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
     }
 
     private DoorStatus getStatus(Map<String, String> body) throws MissingKeyException {
