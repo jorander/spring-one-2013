@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.nebhale.springone2013.web;
 
 import static org.junit.Assert.assertTrue;
@@ -38,6 +37,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import com.jayway.jsonpath.JsonPath;
 import com.nebhale.springone2013.Application;
+import org.springframework.test.web.servlet.ResultActions;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
@@ -56,30 +56,40 @@ public final class GamesControllerIntegrationTest {
 
     @Test
     public void playAGame() throws Exception {
-        String gameLocation = this.mockMvc.perform(post("/games")) //
-        .andExpect(status().isCreated()) //
-        .andReturn().getResponse().getHeader("Location");
+        String gameLocation = createNewGame();
 
         String doorsLocation = getLinkedLocation(gameLocation, "doors");
-        this.mockMvc.perform(put(getDoorLocation(doorsLocation, 1)) //
-        .contentType(MediaType.APPLICATION_JSON) //
-        .content(getBytes("{ \"status\": \"SELECTED\"}"))) //
-        .andExpect(status().isOk());
+        selectDoor(doorsLocation, 1).andExpect(status().isOk());
 
         if ("CLOSED".equals(getDoorStatus(doorsLocation, 0))) {
-            this.mockMvc.perform(put(getDoorLocation(doorsLocation, 0)) //
-            .contentType(MediaType.APPLICATION_JSON) //
-            .content(getBytes("{ \"status\": \"OPEN\"}"))) //
-            .andExpect(status().isOk());
+            openDoor(doorsLocation, 0)
+                    .andExpect(status().isOk());
         } else {
-            this.mockMvc.perform(put(getDoorLocation(doorsLocation, 2)) //
-            .contentType(MediaType.APPLICATION_JSON) //
-            .content(getBytes("{ \"status\": \"OPEN\"}"))) //
-            .andExpect(status().isOk());
+            openDoor(doorsLocation, 2)
+                    .andExpect(status().isOk());
         }
 
         String gameStatus = getGameStatus(gameLocation);
         assertTrue("WON".equals(gameStatus) || "LOST".equals(gameStatus));
+    }
+
+    private String createNewGame() throws Exception {
+        String gameLocation = this.mockMvc.perform(post("/games"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getHeader("Location");
+        return gameLocation;
+    }
+
+    private ResultActions selectDoor(String doorsLocation, final int doorId) throws Exception {
+        return this.mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getBytes("{ \"status\": \"SELECTED\"}")));
+    }
+
+    private ResultActions openDoor(String doorsLocation, final int doorId) throws Exception {
+        return this.mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getBytes("{ \"status\": \"OPEN\"}")));
     }
 
     private String getLinkedLocation(String location, String rel) throws Exception {
@@ -104,5 +114,25 @@ public final class GamesControllerIntegrationTest {
 
     private byte[] getBytes(String s) throws UnsupportedEncodingException {
         return s.getBytes("UTF8");
+    }
+
+    @Test
+    public void cannotAccessNonExistingGame() throws Exception {
+        mockMvc.perform(get("/games/-1")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void cannotSelectTwoDoors() throws Exception {
+        final String gameLocation = createNewGame();
+        final String doorsLocation = getLinkedLocation(gameLocation, "doors");
+        selectDoor(doorsLocation, 1);
+        selectDoor(doorsLocation, 2).andExpect(status().isConflict());
+    }
+
+    @Test
+    public void cannotOpenADoorAtBeginningOfGame() throws Exception {
+        final String gameLocation = createNewGame();
+        final String doorsLocation = getLinkedLocation(gameLocation, "doors");
+        openDoor(doorsLocation, 0).andExpect(status().isConflict());
     }
 }
