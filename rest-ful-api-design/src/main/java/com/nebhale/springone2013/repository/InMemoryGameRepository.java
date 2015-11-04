@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.nebhale.springone2013.repository;
 
 import java.security.SecureRandom;
@@ -29,13 +28,15 @@ import com.nebhale.springone2013.model.Door;
 import com.nebhale.springone2013.model.DoorContent;
 import com.nebhale.springone2013.model.Game;
 import com.nebhale.springone2013.model.GameDoesNotExistException;
+import static java.util.stream.Collectors.toSet;
+import java.util.stream.IntStream;
 
 @Component
 final class InMemoryGameRepository implements GameRepository {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final Map<Integer, Game> games = new HashMap<Integer, Game>();
+    private final Map<Integer, Game> games = new HashMap<>();
 
     private final AtomicInteger idGenerator = new AtomicInteger();
 
@@ -43,11 +44,11 @@ final class InMemoryGameRepository implements GameRepository {
 
     @Override
     public Game create() {
-        synchronized (this.monitor) {
-            Integer id = this.idGenerator.getAndIncrement();
-            Game game = new Game(id, createDoors());
+        synchronized (monitor) {
+            final Integer id = idGenerator.getAndIncrement();
+            final Game game = new Game(id, createDoors());
 
-            this.games.put(id, game);
+            games.put(id, game);
 
             return game;
         }
@@ -55,9 +56,9 @@ final class InMemoryGameRepository implements GameRepository {
 
     @Override
     public Game retrieve(Integer id) throws GameDoesNotExistException {
-        synchronized (this.monitor) {
-            if (this.games.containsKey(id)) {
-                return this.games.get(id);
+        synchronized (monitor) {
+            if (games.containsKey(id)) {
+                return games.get(id);
             }
 
             throw new GameDoesNotExistException(id);
@@ -66,9 +67,9 @@ final class InMemoryGameRepository implements GameRepository {
 
     @Override
     public void remove(Integer id) throws GameDoesNotExistException {
-        synchronized (this.monitor) {
-            if (this.games.containsKey(id)) {
-                this.games.remove(id);
+        synchronized (monitor) {
+            if (games.containsKey(id)) {
+                games.remove(id);
             } else {
                 throw new GameDoesNotExistException(id);
             }
@@ -77,16 +78,9 @@ final class InMemoryGameRepository implements GameRepository {
     }
 
     private Set<Door> createDoors() {
-        Set<Door> doors = new HashSet<Door>();
-
-        int winner = RANDOM.nextInt(3);
-        for (int i = 0; i < 3; i++) {
-            Integer id = this.idGenerator.getAndIncrement();
-            DoorContent content = i == winner ? DoorContent.BICYCLE : DoorContent.SMALL_FURRY_ANIMAL;
-            doors.add(new Door(id, content));
-        }
-
-        return doors;
+        final int winner = RANDOM.nextInt(3);
+        return IntStream.rangeClosed(0, 2)
+                .mapToObj(i -> new Door(idGenerator.getAndIncrement(), (i == winner ? DoorContent.BICYCLE : DoorContent.SMALL_FURRY_ANIMAL)))
+                .collect(toSet());
     }
-
 }

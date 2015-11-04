@@ -18,8 +18,8 @@ package com.nebhale.springone2013.model;
 
 public enum GameStatus {
 
-    AWAITING_INITIAL_SELECTION, //
-    AWAITING_FINAL_SELECTION, //
-    LOST, //
+    AWAITING_INITIAL_SELECTION,
+    AWAITING_FINAL_SELECTION,
+    LOST,
     WON;
 }

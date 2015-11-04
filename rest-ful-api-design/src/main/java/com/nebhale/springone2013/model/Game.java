@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.nebhale.springone2013.model;
 
 import java.util.HashMap;
@@ -37,79 +36,72 @@ public final class Game {
         this.id = id;
 
         this.doors = new HashMap<>();
-        for (Door door : doors) {
+        doors.stream().forEach((door) -> {
             this.doors.put(door.getId(), door);
-        }
+        });
 
         this.status = GameStatus.AWAITING_INITIAL_SELECTION;
     }
 
     public void select(Integer doorId) throws IllegalTransitionException, DoorDoesNotExistException {
-        synchronized (this.monitor) {
-            if (this.status != GameStatus.AWAITING_INITIAL_SELECTION) {
-                throw new IllegalTransitionException(this.id, this.status, GameStatus.AWAITING_FINAL_SELECTION);
+        synchronized (monitor) {
+            if (status != GameStatus.AWAITING_INITIAL_SELECTION) {
+                throw new IllegalTransitionException(id, status, GameStatus.AWAITING_FINAL_SELECTION);
             }
 
-            Door door = getDoor(doorId);
-            door.setStatus(DoorStatus.SELECTED);
+            getDoor(doorId).setStatus(DoorStatus.SELECTED);
 
             openHintDoor();
 
-            this.status = GameStatus.AWAITING_FINAL_SELECTION;
+            status = GameStatus.AWAITING_FINAL_SELECTION;
         }
     }
 
     public void open(Integer doorId) throws IllegalTransitionException, DoorDoesNotExistException {
-        synchronized (this.monitor) {
-            if (this.status != GameStatus.AWAITING_FINAL_SELECTION) {
-                throw new IllegalTransitionException(this.id, this.status, GameStatus.WON);
+        synchronized (monitor) {
+            if (status != GameStatus.AWAITING_FINAL_SELECTION) {
+                throw new IllegalTransitionException(id, status, GameStatus.WON);
             }
 
-            Door door = getDoor(doorId);
+            final Door door = getDoor(doorId);
             if (DoorStatus.OPEN == door.getStatus()) {
-                throw new IllegalTransitionException(this.id, doorId, door.getStatus(), DoorStatus.OPEN);
+                throw new IllegalTransitionException(id, doorId, door.getStatus(), DoorStatus.OPEN);
             }
 
             door.setStatus(DoorStatus.OPEN);
 
-            if (DoorContent.BICYCLE == door.getContent()) {
-                this.status = GameStatus.WON;
-            } else {
-                this.status = GameStatus.LOST;
-            }
+            status = DoorContent.BICYCLE == door.getContent() ? GameStatus.WON : GameStatus.LOST;
         }
     }
 
     @JsonIgnore
     public Integer getId() {
-        return this.id;
+        return id;
     }
 
     public Door getDoor(Integer doorId) throws DoorDoesNotExistException {
-        if (this.doors.containsKey(doorId)) {
-            return this.doors.get(doorId);
+        if (doors.containsKey(doorId)) {
+            return doors.get(doorId);
         }
 
-        throw new DoorDoesNotExistException(this.id, doorId);
+        throw new DoorDoesNotExistException(id, doorId);
     }
 
     @JsonIgnore
     public Set<Door> getDoors() {
-        return new HashSet<>(this.doors.values());
+        return new HashSet<>(doors.values());
     }
 
     public GameStatus getStatus() {
-        synchronized (this.monitor) {
-            return this.status;
+        synchronized (monitor) {
+            return status;
         }
     }
 
     private void openHintDoor() {
-        for (Door door : getDoors()) {
-            if ((DoorStatus.CLOSED == door.getStatus()) && (DoorContent.SMALL_FURRY_ANIMAL == door.peekContent())) {
-                door.setStatus(DoorStatus.OPEN);
-                break;
-            }
-        }
+        getDoors().stream()
+                .filter(door -> DoorStatus.CLOSED == door.getStatus() && DoorContent.SMALL_FURRY_ANIMAL == door.peekContent())
+                .findFirst().get()
+                .setStatus(DoorStatus.OPEN);
     }
 }

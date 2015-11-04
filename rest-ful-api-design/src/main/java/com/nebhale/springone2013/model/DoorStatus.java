@@ -18,7 +18,7 @@ package com.nebhale.springone2013.model;
 
 public enum DoorStatus {
 
-    CLOSED, //
-    OPEN, //
+    CLOSED,
+    OPEN,
     SELECTED;
 }

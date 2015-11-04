@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.nebhale.springone2013.web;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +27,7 @@ import org.springframework.stereotype.Component;
 
 import com.nebhale.springone2013.model.Door;
 import com.nebhale.springone2013.model.Game;
+import static java.util.stream.Collectors.toSet;
 
 @Component
 final class DoorsResourceAssembler implements ResourceAssembler<Game, Resources<Resource<Door>>> {
@@ -36,19 +35,17 @@ final class DoorsResourceAssembler implements ResourceAssembler<Game, Resources<
     private final DoorResourceAssembler doorResourceAssembler;
 
     @Autowired
-    DoorsResourceAssembler(DoorResourceAssembler doorResourceAssembler) {
+    public DoorsResourceAssembler(DoorResourceAssembler doorResourceAssembler) {
         this.doorResourceAssembler = doorResourceAssembler;
     }
 
     @Override
     public Resources<Resource<Door>> toResource(Game game) {
-        Set<Resource<Door>> doors = new HashSet<>();
+        final Set<Resource<Door>> doors = game.getDoors().stream()
+                .map(door -> doorResourceAssembler.toResource(game, door))
+                .collect(toSet());
 
-        for (Door door : game.getDoors()) {
-            doors.add(this.doorResourceAssembler.toResource(game, door));
-        }
-
-        Resources<Resource<Door>> resource = new Resources<>(doors);
+        final Resources<Resource<Door>> resource = new Resources<>(doors);
         resource.add(linkTo(GamesController.class).slash(game.getId()).slash("doors").withSelfRel());
 
         return resource;

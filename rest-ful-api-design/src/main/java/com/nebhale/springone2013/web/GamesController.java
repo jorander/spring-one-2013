@@ -64,9 +64,9 @@ final class GamesController {
 
     @RequestMapping(method = RequestMethod.POST, value = "")
     public ResponseEntity<Void> createGame() {
-        Game game = gameRepository.create();
+        final Game game = gameRepository.create();
 
-        HttpHeaders headers = new HttpHeaders();
+        final HttpHeaders headers = new HttpHeaders();
         headers.setLocation(linkTo(GamesController.class).slash(game.getId()).toUri());
 
         return new ResponseEntity<>(headers, HttpStatus.CREATED);
@@ -75,7 +75,7 @@ final class GamesController {
     @RequestMapping(method = RequestMethod.GET, value = "/{gameId}", produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
     @ResponseBody
     public Resource<Game> showGame(@PathVariable Integer gameId) throws GameDoesNotExistException {
-        Game game = gameRepository.retrieve(gameId);
+        final Game game = gameRepository.retrieve(gameId);
         return gameResourceAssembler.toResource(game);
     }
 
@@ -88,7 +88,7 @@ final class GamesController {
     @RequestMapping(method = RequestMethod.GET, value = "/{gameId}/doors", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE})
     @ResponseBody
     public Resources<Resource<Door>> showDoors(@PathVariable Integer gameId) throws GameDoesNotExistException {
-        Game game = gameRepository.retrieve(gameId);
+        final Game game = gameRepository.retrieve(gameId);
         return doorsResourceAssembler.toResource(game);
     }
 
@@ -97,8 +97,8 @@ final class GamesController {
     @ResponseBody
     public void modifyDoor(@PathVariable Integer gameId, @PathVariable Integer doorId, @RequestBody Map<String, String> body)
             throws MissingKeyException, GameDoesNotExistException, IllegalTransitionException, DoorDoesNotExistException {
-        DoorStatus status = getStatus(body);
-        Game game = gameRepository.retrieve(gameId);
+        final DoorStatus status = getStatus(body);
+        final Game game = gameRepository.retrieve(gameId);
 
         if (DoorStatus.SELECTED == status) {
             game.select(doorId);
@@ -126,7 +126,7 @@ final class GamesController {
 
     private DoorStatus getStatus(Map<String, String> body) throws MissingKeyException {
         if (body.containsKey(STATUS_KEY)) {
-            String value = body.get(STATUS_KEY);
+            final String value = body.get(STATUS_KEY);
 
             try {
                 return DoorStatus.valueOf(value.toUpperCase());

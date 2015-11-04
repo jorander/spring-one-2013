@@ -28,7 +28,7 @@ import com.nebhale.springone2013.model.Game;
 final class DoorResourceAssembler {
 
     public Resource<Door> toResource(Game game, Door door) {
-        Resource<Door> resource = new Resource<Door>(door);
+        final Resource<Door> resource = new Resource<>(door);
         resource.add(linkTo(GamesController.class).slash(game.getId()).slash("doors").slash(door.getId()).withSelfRel());
         return resource;
     }

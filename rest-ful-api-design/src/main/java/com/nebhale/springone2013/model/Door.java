@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.nebhale.springone2013.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,9 +23,9 @@ public final class Door {
 
     private final Object monitor = new Object();
 
-    private volatile DoorContent content;
+    private final DoorContent content;
 
-    private volatile DoorStatus status;
+    private DoorStatus status;
 
     public Door(Integer id, DoorContent content) {
         this.id = id;
@@ -36,30 +35,27 @@ public final class Door {
 
     @JsonIgnore
     public Integer getId() {
-        return this.id;
+        return id;
     }
 
     public DoorContent getContent() {
-        synchronized (this.monitor) {
-            if (this.status == DoorStatus.OPEN) {
-                return this.content;
-            }
-            return DoorContent.UNKNOWN;
+        synchronized (monitor) {
+            return status == DoorStatus.OPEN ? content : DoorContent.UNKNOWN;
         }
     }
 
     public DoorStatus getStatus() {
-        synchronized (this.monitor) {
-            return this.status;
+        synchronized (monitor) {
+            return status;
         }
     }
 
     DoorContent peekContent() {
-        return this.content;
+        return content;
     }
 
     void setStatus(DoorStatus status) {
-        synchronized (this.monitor) {
+        synchronized (monitor) {
             this.status = status;
         }
     }

@@ -18,7 +18,7 @@ package com.nebhale.springone2013.model;
 
 public enum DoorContent {
 
-    BICYCLE, //
-    SMALL_FURRY_ANIMAL, //
+    BICYCLE,
+    SMALL_FURRY_ANIMAL,
     UNKNOWN;
 }

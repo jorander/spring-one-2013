@@ -29,7 +29,7 @@ final class GameResourceAssembler implements ResourceAssembler<Game, Resource<Ga
 
     @Override
     public Resource<Game> toResource(Game game) {
-        Resource<Game> resource = new Resource<Game>(game);
+        final Resource<Game> resource = new Resource<>(game);
         resource.add(linkTo(GamesController.class).slash(game.getId()).slash("doors").withRel("doors"));
         return resource;
     }

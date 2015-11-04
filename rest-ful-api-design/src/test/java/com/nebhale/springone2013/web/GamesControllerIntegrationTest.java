@@ -45,20 +45,20 @@ import org.springframework.test.web.servlet.ResultActions;
 public final class GamesControllerIntegrationTest {
 
     @Autowired
-    private volatile WebApplicationContext webApplicationContext;
+    private WebApplicationContext webApplicationContext;
 
-    private volatile MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Before
     public void before() {
-        this.mockMvc = webAppContextSetup(this.webApplicationContext).build();
+        mockMvc = webAppContextSetup(webApplicationContext).build();
     }
 
     @Test
     public void playAGame() throws Exception {
-        String gameLocation = createNewGame();
+        final String gameLocation = createNewGame();
+        final String doorsLocation = getLinkedLocation(gameLocation, "doors");
 
-        String doorsLocation = getLinkedLocation(gameLocation, "doors");
         selectDoor(doorsLocation, 1).andExpect(status().isOk());
 
         if ("CLOSED".equals(getDoorStatus(doorsLocation, 0))) {
@@ -69,46 +69,45 @@ public final class GamesControllerIntegrationTest {
                     .andExpect(status().isOk());
         }
 
-        String gameStatus = getGameStatus(gameLocation);
+        final String gameStatus = getGameStatus(gameLocation);
         assertTrue("WON".equals(gameStatus) || "LOST".equals(gameStatus));
     }
 
     private String createNewGame() throws Exception {
-        String gameLocation = this.mockMvc.perform(post("/games"))
+        return mockMvc.perform(post("/games"))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getHeader("Location");
-        return gameLocation;
     }
 
     private ResultActions selectDoor(String doorsLocation, final int doorId) throws Exception {
-        return this.mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
+        return mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getBytes("{ \"status\": \"SELECTED\"}")));
     }
 
     private ResultActions openDoor(String doorsLocation, final int doorId) throws Exception {
-        return this.mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
+        return mockMvc.perform(put(getDoorLocation(doorsLocation, doorId))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getBytes("{ \"status\": \"OPEN\"}")));
     }
 
     private String getLinkedLocation(String location, String rel) throws Exception {
-        String json = this.mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        final String json = mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return JsonPath.read(json, String.format("$.links[?(@.rel==%s)].href[0]", rel));
     }
 
     private String getDoorLocation(String location, int index) throws Exception {
-        String json = this.mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        final String json = mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return JsonPath.read(json, String.format("$.content[%d].links[?(@.rel==self)].href[0]", index));
     }
 
     private String getDoorStatus(String location, int index) throws Exception {
-        String json = this.mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        final String json = mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return JsonPath.read(json, String.format("$.content[%d].status", index));
     }
 
     private String getGameStatus(String location) throws Exception {
-        String json = this.mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        final String json = mockMvc.perform(get(location)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return JsonPath.read(json, "$.status");
     }
 
